@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
+#include <time.h>
 
 using namespace std;
 
@@ -64,6 +65,18 @@ void llenar_matriz(int** mat)
             cin>>mat[i][j];
 }
 
+void llenar_aleatorio(int** mat, limites l_mat, int a, int b)
+{
+    int i, j;
+    for(i = l_mat.x_i; i < l_mat.x_f; i++)
+        for(j = l_mat.y_i; j < l_mat.y_f; j++)
+        {
+            srand(9);
+            mat[i][j] = (a + (a - b) * (rand() / RAND_MAX));
+        }
+
+}
+
 void rellenar_matriz(int** mat, limites l_mat, int num)
 {
     int i, j;
@@ -82,17 +95,6 @@ void print_matriz(int** mat)
         cout<<endl;
     }
     cout<<endl;
-}
-
-void print_matriz2(int** mat, limites l_mat)
-{
-    int i, j;
-    for(i = l_mat.x_i; i < l_mat.x_f; i++)
-    {
-        for(j = l_mat.y_i; j < l_mat.y_f; j++)
-            cout<<mat[i][j]<<" ";
-        cout<<endl;
-    }
 }
 
 void sumar_matriz(int** mat1, int** mat2, int** res, limites l_mat1, limites l_mat2, limites l_res)
@@ -120,7 +122,7 @@ void subdividir(limites l_mat, int i, int j, limites* sub_mat)
     int n_x = l_mat.x_i + (l_mat.x_f - l_mat.x_i) / 2;
     int n_y = l_mat.y_i + (l_mat.y_f - l_mat.y_i) / 2;
     (*sub_mat) = l_mat;
-    if(!i)
+    if(i == 0)
         sub_mat->x_f = n_x;
     else
         sub_mat->x_i = n_x;
@@ -138,7 +140,7 @@ void strassen(int** mat1, int** mat2,int** res, limites l_mat1, limites l_mat2, 
     ///caso base
     if((l_mat1.y_f - l_mat1.y_i) == 1)
     {
-        res[l_res.x_i][l_res.y_i] += (mat1[l_mat1.x_i][l_mat1.y_i] * mat2[l_mat2.x_i][l_mat2.y_i]);
+        res[l_res.x_i][l_res.y_i] += mat1[l_mat1.x_i][l_mat1.y_i] * mat2[l_mat2.x_i][l_mat2.y_i];
         return;
     }
     ///subdivido matrices
@@ -162,113 +164,102 @@ void strassen(int** mat1, int** mat2,int** res, limites l_mat1, limites l_mat2, 
         rellenar_matriz(p_i[i], l_aux, 0);
 
     ///calculo P1, P2, P3 .... P7
+    #define reiniciar rellenar_matriz(aux1, l_aux, 0); rellenar_matriz(aux2, l_aux, 0)
 
     /// P1
-    rellenar_matriz(aux1, l_aux, 0);
-    rellenar_matriz(aux2, l_aux, 0);
+    reiniciar;
     ///(a + d)
     sumar_matriz(mat1, mat1, aux1, l_sub_mat1[0][0], l_sub_mat1[1][1], l_aux);
     ///(e + h)
     sumar_matriz(mat2, mat2, aux2, l_sub_mat2[0][0], l_sub_mat2[1][1], l_aux);
     /// (a + d) * (e + h)
     strassen(aux1, aux2, p_i[0], l_aux, l_aux, l_aux);
-    cout<<"p1"<<endl;
-    print_matriz2(p_i[0], l_aux);
 
     /// P2
-    rellenar_matriz(aux1, l_aux, 0);
+    reiniciar;
     ///(c + d)
     sumar_matriz(mat1, mat1, aux1, l_sub_mat1[1][0], l_sub_mat1[1][1], l_aux);
     ///(c + d) * e
     strassen(aux1, mat2, p_i[1], l_aux, l_sub_mat2[0][0], l_aux);
-    cout<<"p2"<<endl;
-    print_matriz2(p_i[1], l_aux);
 
     /// P3
-    rellenar_matriz(aux1, l_aux, 0);
+    reiniciar;
     ///(f - h)
-    restar_matriz(mat2, mat2, aux1, l_sub_mat2[0][1], l_sub_mat2[1][1], l_aux);
+    restar_matriz(mat2, mat2, aux2, l_sub_mat2[0][1], l_sub_mat2[1][1], l_aux);
     ///a * (f - h)
-    strassen(mat1, aux1, p_i[2], l_sub_mat1[0][0], l_aux, l_aux);
-    cout<<"p3"<<endl;
-    print_matriz2(p_i[2], l_aux);
+    strassen(mat1, aux2, p_i[2], l_sub_mat1[0][0], l_aux, l_aux);
 
     /// P4
-    rellenar_matriz(aux1, l_aux, 0);
+    reiniciar;
     ///(g - e)
-    restar_matriz(mat2, mat2, aux1, l_sub_mat2[1][0], l_sub_mat2[0][0], l_aux);
+    restar_matriz(mat2, mat2, aux2, l_sub_mat2[1][0], l_sub_mat2[0][0], l_aux);
     ///d * (g - e)
-    strassen(mat1, aux1, p_i[3], l_sub_mat1[1][1], l_aux, l_aux);
-    cout<<"p4"<<endl;
-    print_matriz2(p_i[3], l_aux);
+    strassen(mat1, aux2, p_i[3], l_sub_mat1[1][1], l_aux, l_aux);
 
     /// P5
-    rellenar_matriz(aux1, l_aux, 0);
+    reiniciar;
     ///(a + b)
     sumar_matriz(mat1, mat1, aux1, l_sub_mat1[0][0], l_sub_mat1[0][1], l_aux);
     ///(a + b) * h
     strassen(aux1, mat2, p_i[4], l_aux, l_sub_mat2[1][1], l_aux);
-    cout<<"p5"<<endl;
-    print_matriz2(p_i[4], l_aux);
 
     /// P6
-    rellenar_matriz(aux1, l_aux, 0);
-    rellenar_matriz(aux2, l_aux, 0);
+    reiniciar;
     ///(c - a)
     restar_matriz(mat1, mat1, aux1, l_sub_mat1[1][0], l_sub_mat1[0][0], l_aux);
     ///(e + f)
     sumar_matriz(mat2, mat2, aux2, l_sub_mat2[0][0], l_sub_mat2[0][1], l_aux);
     ///(c - a) * (e + f)
     strassen(aux1, aux2, p_i[5], l_aux, l_aux, l_aux);
-    cout<<"p6"<<endl;
-    print_matriz2(p_i[5], l_aux);
 
     ///P7
-    rellenar_matriz(aux1, l_aux, 0);
-    rellenar_matriz(aux2, l_aux, 0);
+    reiniciar;
     ///(b - d)
     restar_matriz(mat1, mat1, aux1, l_sub_mat1[0][1], l_sub_mat1[1][1], l_aux);
     ///(g + h)
     sumar_matriz(mat2, mat2, aux2, l_sub_mat2[1][0], l_sub_mat2[1][1], l_aux);
     ///(b - d) * (g + h)
     strassen(aux1, aux2, p_i[6], l_aux, l_aux, l_aux);
-    cout<<"p7"<<endl;
-    print_matriz2(p_i[6], l_aux);
 
 
-    rellenar_matriz(aux1, l_aux, 0);
-    rellenar_matriz(aux2, l_aux, 0);
-    ///P1 + P4
+    reiniciar;
+    ///P0 + P3 - P4 + P6 = C00
     sumar_matriz(p_i[0], p_i[3], aux1, l_aux, l_aux, l_aux);
-    ///P5 + P7
-    sumar_matriz(p_i[4], p_i[6], aux2, l_aux, l_aux, l_aux);
-    ///(P1 + P4) - (P5 + P7)
-    restar_matriz(aux1, aux2, res, l_aux, l_aux, l_sub_res[0][0]);
+    restar_matriz(aux1, p_i[4], aux2, l_aux, l_aux, l_aux);
+    sumar_matriz(aux2, p_i[6], res, l_aux, l_aux, l_sub_res[0][0]);
 
-    ///P3 + P5
+    ///P2 + P4 = C01
     sumar_matriz(p_i[2], p_i[4], res, l_aux, l_aux, l_sub_res[0][1]);
 
-    ///P2 + P4
+    ///P1 + P3 = C10
     sumar_matriz(p_i[1], p_i[3], res, l_aux, l_aux, l_sub_res[1][0]);
 
-    rellenar_matriz(aux1, l_aux, 0);
-    rellenar_matriz(aux2, l_aux, 0);
-    ///P1 - P2
-    restar_matriz(p_i[0], p_i[1], aux1, l_aux, l_aux, l_aux);
-    ///P3 + P4
-    sumar_matriz(p_i[2], p_i[3], aux2, l_aux, l_aux, l_aux);
-    ///(P1 - P2) + (P3 + P4)
-    sumar_matriz(aux1, aux2, res, l_aux, l_aux, l_sub_res[1][1]);
+    ///P0 + P2 - P1 + P5 = C11
+    sumar_matriz(p_i[0], p_i[2], aux1, l_aux, l_aux, l_aux);
+    restar_matriz(aux1, p_i[1], aux2, l_aux, l_aux, l_aux);
+    sumar_matriz(aux2, p_i[5], res, l_aux, l_aux, l_sub_res[1][1]);
 }
 
 int main()
 {
+    /// desde archivo
     int** mat1 = leer_matriz("m1.txt");
     print_matriz(mat1);
     int** mat2 = leer_matriz("m2.txt");
     print_matriz(mat2);
-    int** mat3 = crear_matriz(tam);
 
+
+    /// aleatorio
+    /*srand(time(0));
+    int** mat1 = crear_matriz(tam);
+    llenar_aleatorio(mat1, l_mat1, 50, 100);
+    print_matriz(mat1);
+    int** mat2 = crear_matriz(tam);
+    llenar_aleatorio(mat2, l_mat1, 50, 100);
+    print_matriz(mat2);
+    */
+
+    int** mat3 = crear_matriz(tam);
     limites l_mat1, l_mat2, l_mat3;
     l_mat1 = l_mat2 = l_mat3 = {0, tam, 0, tam};
 
