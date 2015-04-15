@@ -4,6 +4,7 @@
 #include <fstream>
 #include <string>
 #include <time.h>
+#include <pthread.h>
 
 using namespace std;
 
@@ -240,6 +241,37 @@ void strassen(int** mat1, int** mat2,int** res, limites l_mat1, limites l_mat2, 
     sumar_matriz(aux2, p_i[5], res, l_aux, l_aux, l_sub_res[1][1]);
 }
 
+typedef struct
+{
+    int** mat1, **mat2, **res;
+    limites l_mat1, l_mat2, l_res;
+} Cparams;
+
+void copiar_matriz(int** mat1, int** mat2, limites l_mat)
+{
+    int i, j;
+    for(i = l_mat.x_i; i < l_mat.x_f; i++)
+        for(j = l_mat.y_i; j < l_mat.y_f; j++)
+            mat[i][j] = num;
+}
+
+void p_strassen(void* params)
+{
+    Cparams* tmp = (Cparams*) params;
+    
+    int** mat1, **mat2, **res;
+    limites l_mat1, l_mat2, l_res;
+
+    mat1 = (*tmp).mat1;
+    mat2 = (*tmp).mat2;
+    res = (*tmp).res;
+    l_mat1 = (*tmp).l_mat1;
+    l_mat2 = (*tmp).l_mat2;
+    l_res = (*tmp).l_res;
+
+    print_matriz(mat1);
+}
+
 int main()
 {
     /// desde archivo
@@ -263,7 +295,12 @@ int main()
     limites l_mat1, l_mat2, l_mat3;
     l_mat1 = l_mat2 = l_mat3 = {0, tam, 0, tam};
 
-    strassen(mat1, mat2, mat3, l_mat1, l_mat2, l_mat3);
+    ///strassen normal
+    //strassen(mat1, mat2, mat3, l_mat1, l_mat2, l_mat3);
+    ///strassen paralelo
+    Cparams* params;
+    *params = {mat1, mat2, mat3, l_mat1, l_mat2, l_mat3};
+    p_strassen((void*) params);
     print_matriz(mat3);
     return 0;
 }
