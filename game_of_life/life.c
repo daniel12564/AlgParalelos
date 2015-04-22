@@ -51,8 +51,11 @@ void game_of_life(bool** universo, int generaciones)
 	{
 		if(!rank)
 		{
-			
-			MPI_Scatter();
+			MPI_Scatter(void* send_data, int send_count, MPI_Datatype send_datatype, void* recv_data, int recv_count, MPI_Datatype recv_datatype, int root, MPI_Comm communicator);
+		}
+		else
+		{
+
 		}
 	}
 
