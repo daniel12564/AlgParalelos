@@ -54,15 +54,8 @@ char** leer_universo()
 	{
 		fscanf(file, "%s" ,buffer);
 		for(j = 0; j < tam_j; j++)
-		{
 			universo[i][j] = buffer[j];
-			//printf("%c-%c ", buffer[j], universo[i][j]);
-		}
-		//printf("\n");
 		i++;
-		//for(i = 0; i < tam_i; i++)
-			//for(j = 0; j < tam_j; j++)	
-			
 	}
 	fclose(file);
 	return universo;
@@ -93,6 +86,12 @@ char evaluar(char** universo, int x, int y)
 	int y_pos = modulo(y + 1, tam_j);
 	int y_neg = modulo(y - 1, tam_j);
 	int contador = 0;
+	/*
+	printf("para %d,%d\n", x, y);
+	printf("%d,%d:%c %d,%d:%c %d,%d:%c\n", x_neg, y_neg, universo[x_neg][y_neg], x_neg, y, universo[x_neg][y], x_neg, y_pos, universo[x_neg][x_pos]);
+	printf("%d,%d:%c %d,%d:%c %d,%d:%c\n", x, y_neg, universo[x][y_neg], x, y, universo[x][y], x, y_pos, universo[x][y_pos]);
+	printf("%d,%d:%c %d,%d:%c %d,%d:%c\n", x_pos, y_neg, universo[x_pos][y_neg], x_pos, y, universo[x_pos][y], x_pos, y_pos, universo[x_pos][y_pos]);
+	*/
 	contador += (universo[x_neg][y_neg] == '1') ? 1 : 0;
 	contador += (universo[x_neg][y] == '1') ? 1 : 0;
 	contador += (universo[x_neg][y_pos] == '1') ? 1 : 0;
@@ -101,10 +100,17 @@ char evaluar(char** universo, int x, int y)
 	contador += (universo[x_pos][y_neg] == '1') ? 1 : 0;
 	contador += (universo[x_pos][y] == '1') ? 1 : 0;
 	contador += (universo[x_pos][y_pos] == '1') ? 1 : 0;
+	//printf("%d\n", contador);
 	if(contador < 2 || contador > 3)
+	{
+		//printf("MUERE\n");
 		return '0';
+	}
 	if(contador == 2 || contador == 3)
+	{
+		//printf("VIVE\n");
 		return '1';
+	}
 }
 
 void game_of_life(char** universo, int generaciones)
@@ -120,6 +126,9 @@ void game_of_life(char** universo, int generaciones)
 	int rank, size;
 	int bloque, n_i, n_j;
 	char** n_universo;
+	n_universo = (char **) malloc(tam_i * sizeof(char *));
+	for(i = 0; i < tam_i; i++)
+			n_universo[i] = (char *) malloc(tam_j * sizeof(char));
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
@@ -142,6 +151,7 @@ void game_of_life(char** universo, int generaciones)
 			}
 		}
 	}
+
 	MPI_Datatype MPI_My_pair = createRecType();
 	MPI_Scatter(vector_universo, bloque * tam_j, MPI_My_pair, vector_bloque, bloque * tam_j, MPI_My_pair, 0, MPI_COMM_WORLD);
 
@@ -149,16 +159,23 @@ void game_of_life(char** universo, int generaciones)
     {
         if(k == rank)
         {
-			for(i = 0; i < bloque * tam_j; i++)
-				n_universo[vector_bloque[i].pos_i][vector_bloque[i].pos_j] = evaluar(universo, vector_bloque[i].pos_i, vector_bloque[i].pos_j);
-		}
-	}
-	printf("Nuevo universo\n");
-	print_universo(n_universo);
-
+            for(i = 0; i < bloque; i++)
+            {
+                for(j = 0; j < tam_j; j++)
+                {
+					//printf("%d,%d:%c ",vector_bloque[i*tam_j+j].pos_i, vector_bloque[i*tam_j+j].pos_j, universo[vector_bloque[i*tam_j+j].pos_i][vector_bloque[i*tam_j+j].pos_j]);
+                	n_universo[vector_bloque[i*tam_j+j].pos_i][vector_bloque[i*tam_j+j].pos_j] = evaluar(universo, vector_bloque[i*tam_j+j].pos_i, vector_bloque[i*tam_j+j].pos_j);
+                	//printf("%c ", evaluar(universo, vector_bloque[i*tam_j+j].pos_i, vector_bloque[i*tam_j+j].pos_j));
+                }
+            }
+        }
+        MPI_Barrier(MPI_COMM_WORLD);
+    }
 	if(!rank)
 	{
-		//game_of_life(n_universo, generaciones--);
+		printf("Nuevo universo\n");
+		print_universo(n_universo);
+		game_of_life(n_universo, generaciones--);
 	}
 
 }
