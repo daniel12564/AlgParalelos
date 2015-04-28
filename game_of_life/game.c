@@ -115,13 +115,6 @@ char evaluar(char** universo, int x, int y)
 
 void game_of_life(char** universo, int generaciones)
 {
-	if(generaciones > 0)
-	{
-		printf("Universo en generacion: %d\n", generaciones);
-		print_universo(universo);
-	}
-	else
-		return;
 	int i, j, k;
 	int rank, size;
 	int bloque, n_i, n_j;
@@ -132,6 +125,17 @@ void game_of_life(char** universo, int generaciones)
 
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 	MPI_Comm_size(MPI_COMM_WORLD, &size);
+
+	if(!rank)
+	{
+		if(generaciones > 0)
+		{
+			printf("Universo en generacion: %d\n", generaciones);
+			print_universo(universo);
+		}
+		else
+			return;
+	}
 
 	bloque = tam_i / size;
 	My_pair vector_universo[tam_i * tam_j];
@@ -173,9 +177,9 @@ void game_of_life(char** universo, int generaciones)
     }
 	if(!rank)
 	{
-		printf("Nuevo universo\n");
-		print_universo(n_universo);
-		game_of_life(n_universo, generaciones--);
+		//printf("Nuevo universo\n");
+		//print_universo(n_universo);
+		game_of_life(n_universo, generaciones-1);
 	}
 
 }
@@ -186,7 +190,7 @@ int main(int argc, char* argv[])
 	char** universo = leer_universo();
 
 	MPI_Init(&argc, &argv);
-	game_of_life(universo, 3);
+	game_of_life(universo, 10);
 	MPI_Finalize();
 	return 0;
 }
